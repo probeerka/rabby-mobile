@@ -31,7 +31,7 @@ on:
 
 defaults:
   run:
-    shell: bash -ieol pipefail {0}
+    shell: bash -eol pipefail {0}
 env:
   BUILD_TARGET_PLATFORM: android
 
@@ -60,14 +60,12 @@ jobs:
           echo "flatten_refname=$flatten_refname" >> "$GITHUB_OUTPUT"
 
       # --- НАЧАЛО БЛОКА КЭШИРОВАНИЯ ---
-      - name: Get Yarn cache directory path
-        id: yarn-cache-dir-path
-        run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
-
       - name: Cache Yarn dependencies
         uses: actions/cache@v3
         with:
-          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          path: |
+            .yarn/cache
+            .yarn/install-state.gz
           key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
           restore-keys: |
             ${{ runner.os }}-yarn-
