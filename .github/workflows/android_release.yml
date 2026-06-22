@@ -11,7 +11,7 @@ on:
       buildchannel:
         description: 'Build Channel'
         required: true
-        default: 'appstore'
+        default: 'selfhost'
         type: choice
         options:
           - selfhost
@@ -81,13 +81,27 @@ jobs:
             ${{ runner.os }}-gradle-
       # --- КОНЕЦ БЛОКА КЭШИРОВАНИЯ ---
 
-      - name: Setup Nodejs
-        uses: actions/setup-node@3235b876344d2a9aa001b8d1453c930bba69e610 # v3
-        with:
-          node-version: 22
-
-      - name: Enable Corepack
-        run: corepack enable
+      - name: Setup Node.js via NVM and Enable Corepack
+        run: |
+          # Устанавливаем NVM
+          curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+          # Загружаем NVM в текущую сессию терминала
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+          
+          # Переходим в папку с приложением, где лежит .nvmrc
+          cd apps/mobile
+          
+          # Устанавливаем версию, указанную в .nvmrc (v22)
+          nvm install
+          nvm use
+          
+          # Включаем Corepack (для Yarn) от имени только что установленной Node
+          corepack enable
+          
+          # Проверяем, что всё прошло успешно
+          echo "Успешно активирован Node: $(node -v)"
+          echo "Успешно активирован Yarn: $(yarn -v)"
 
       - name: Setup Ruby & Fastlane
         uses: ruby/setup-ruby@v1 # Официальный экшен, работает стабильнее на GitHub раннерах
