@@ -125,12 +125,26 @@ jobs:
           bundle install;
 
           [ -z $buildchannel ] && export buildchannel=appstore;
+          
+          # --- ДОБАВЛЕНА РЕАЛЬНАЯ СБОРКА ЧЕРЕЗ GRADLE ---
+          echo "Starting actual Gradle build for channel: $buildchannel";
+          if [ "$buildchannel" = "appstore" ]; then
+            # Собираем .aab для Google Play
+            cd android && ./gradlew bundleRelease && cd ..
+          else
+            # Собираем .apk для selfhost
+            cd android && ./gradlew assembleRelease && cd ..
+          fi
+          echo "Gradle build finished!";
+          # ------------------------------------------------
+
+          # Теперь запускаем деплой-скрипт, который возьмет готовый файл
           ./scripts/deploy-android.sh
         env:
           FLATTEN_REFNAME: ${{ steps.actionvars.outputs.flatten_refname }}
           TRIGGER_DATE: ${{ steps.actionvars.outputs.trigger_date }}
           REALLY_UPLOAD: 'false'
-          RABBY_MOBILE_BUILD_BUCKET: 'fuckingpwd'
+          RABBY_MOBILE_BUILD_BUCKET: 'local-github-actions-build'
           RABBY_MOBILE_KR_PWD: ${{ secrets.RABBY_MOBILE_KR_PWD }}
           RABBY_MOBILE_CODE: ${{ secrets.RABBY_MOBILE_CODE2 }}
           RABBY_MOBILE_ANDROID_KEY_STORE: ${{ secrets.RABBY_MOBILE_ANDROID_KEY_STORE }}
@@ -140,7 +154,7 @@ jobs:
           RABBY_MOBILE_SENTRY_AUTH_TOKEN2: ${{ secrets.RABBY_MOBILE_SENTRY_AUTH_TOKEN2 }}
           SENTRY_AUTH_TOKEN: ${{ secrets.RABBY_MOBILE_SENTRY_AUTH_TOKEN2 }}
           buildchannel: ${{ inputs.buildchannel || 'appstore' }}
-
+          
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
